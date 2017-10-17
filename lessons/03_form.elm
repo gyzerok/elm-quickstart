@@ -1,9 +1,9 @@
 module Main exposing (..)
 
 import Html exposing (..)
-import Html.Lazy exposing (lazy)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Html.Lazy exposing (lazy)
 
 
 main =
@@ -93,9 +93,9 @@ update action model =
                 new =
                     current |> setFirstName val
             in
-                { model
-                    | current = new
-                }
+            { model
+                | current = new
+            }
 
         UpdateLastName val ->
             let
@@ -105,9 +105,9 @@ update action model =
                 new =
                     current |> setLastName val
             in
-                { model
-                    | current = new
-                }
+            { model
+                | current = new
+            }
 
         UpdateAge val ->
             let
@@ -120,9 +120,9 @@ update action model =
                 new =
                     current |> setAge age
             in
-                { model
-                    | current = new
-                }
+            { model
+                | current = new
+            }
 
         Clear ->
             let
@@ -132,9 +132,9 @@ update action model =
                 new =
                     current |> clearForm
             in
-                { model
-                    | current = new
-                }
+            { model
+                | current = new
+            }
 
         Submit ->
             model
@@ -163,6 +163,7 @@ view : Model -> Html Action
 view model =
     section [ sectionStyle ]
         [ div [ id "foo-form" ] [ lazy formView model ]
+        , div [ id "foo-form-actions" ] [ lazy formActions model ]
         , div [ id "all-forms" ] [ lazy formList model.submitted ]
         ]
 
@@ -171,14 +172,22 @@ formView : Model -> Html Action
 formView model =
     Html.form [ formStyle ]
         [ span []
-            [ input [ placeholder "FirstName", onInput UpdateFirstName ] []
+            [ input [ type_ "text", value model.current.firstName, placeholder "FirstName", onInput UpdateFirstName ] []
             ]
         , span []
-            [ input [ placeholder "LastName", onInput UpdateLastName ] []
+            [ input [ type_ "text", value model.current.lastName, placeholder "LastName", onInput UpdateLastName ] []
             ]
         , span []
-            [ input [ placeholder "Age", onInput UpdateAge ] []
+            [ input [ type_ "number", value (toString model.current.age), placeholder "Age", onInput UpdateAge ] []
             ]
+        ]
+
+
+formActions : model -> Html Action
+formActions model =
+    div []
+        [ button [ onClick Submit ] [ text "Submit" ]
+        , button [ onClick Clear ] [ text "Clear" ]
         ]
 
 
