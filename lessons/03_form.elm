@@ -1,49 +1,74 @@
+module Main exposing (..)
+
 import Html exposing (..)
 import Html.Lazy exposing (lazy)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 
+
 main =
-  Html.beginnerProgram{ model=model, update=update, view=view }
+    Html.beginnerProgram { model = model, update = update, view = view }
+
+
 
 -- model
-
 -- list of all entries to be displayed
-type alias Entries = {
-    forms: List Entry
-}
+
+
+type alias Entries =
+    { forms : List Entry
+    }
+
+
 
 -- currently active entry
-type alias Entry = {
-  firstName: String,
-  lastName: String,
-  age: Int
-}
 
-type alias Model = {
-    current: Entry,
-    submitted: Entries
-}
+
+type alias Entry =
+    { firstName : String
+    , lastName : String
+    , age : Int
+    }
+
+
+type alias Model =
+    { current : Entry
+    , submitted : Entries
+    }
+
+
 
 -- full model
-model: Model
-model = { current = {age=0, firstName="", lastName=""}, submitted = {forms = []} }
 
 
-setFirstName: String -> Entry -> Entry
+model : Model
+model =
+    { current = { age = 0, firstName = "", lastName = "" }, submitted = { forms = [] } }
+
+
+setFirstName : String -> Entry -> Entry
 setFirstName val entry =
     { entry | firstName = val }
-setLastName: String -> Entry -> Entry
+
+
+setLastName : String -> Entry -> Entry
 setLastName val entry =
     { entry | lastName = val }
-setAge: Int -> Entry -> Entry
+
+
+setAge : Int -> Entry -> Entry
 setAge val entry =
     { entry | age = val }
-clearForm: Entry -> Entry
+
+
+clearForm : Entry -> Entry
 clearForm entry =
-    {entry | firstName="", lastName="", age=0}
+    { entry | firstName = "", lastName = "", age = 0 }
+
+
 
 -- update
+
 
 type Action
     = NoOp
@@ -57,89 +82,115 @@ type Action
 update : Action -> Model -> Model
 update action model =
     case action of
-        NoOp -> model
+        NoOp ->
+            model
+
         UpdateFirstName val ->
             let
-                current = model.current
-                new = current |> setFirstName val
+                current =
+                    model.current
+
+                new =
+                    current |> setFirstName val
             in
-                {
-                    model | current = new
+                { model
+                    | current = new
                 }
+
         UpdateLastName val ->
             let
-                current = model.current
-                new = current |> setLastName val
+                current =
+                    model.current
+
+                new =
+                    current |> setLastName val
             in
-                {
-                    model | current = new
+                { model
+                    | current = new
                 }
+
         UpdateAge val ->
             let
-                current = model.current
-                age =  String.toInt val |> Result.toMaybe |> Maybe.withDefault 0
-                new = current |> setAge age
+                current =
+                    model.current
+
+                age =
+                    String.toInt val |> Result.toMaybe |> Maybe.withDefault 0
+
+                new =
+                    current |> setAge age
             in
-                {
-                    model | current = new
+                { model
+                    | current = new
                 }
+
         Clear ->
             let
-                current = model.current
-                new = current |> clearForm
+                current =
+                    model.current
+
+                new =
+                    current |> clearForm
             in
-                {
-                    model | current = new
+                { model
+                    | current = new
                 }
+
         Submit ->
             model
 
 
+
 -- view
 
-sectionStyle: Attribute msg
+
+sectionStyle : Attribute msg
 sectionStyle =
-    style [
-        ("visibility", "visible"),
-        ("display", "inline-block")
-    ]
-formStyle: Attribute msg
+    style
+        [ ( "visibility", "visible" )
+        , ( "display", "inline-block" )
+        ]
+
+
+formStyle : Attribute msg
 formStyle =
-    style [
-        ("display", "inline-grid")
-    ]
+    style
+        [ ( "display", "inline-grid" )
+        ]
+
 
 view : Model -> Html Action
 view model =
-    section [ sectionStyle ] [
-        div [id "foo-form" ] [ lazy formView model ],
-        div [id "all-forms"] [ lazy formList model.submitted ]
-    ]
-
-formView: Model -> Html Action
-formView model =
-    Html.form [ formStyle ] [
-        span [] [
-            input [ placeholder "FirstName", onInput UpdateFirstName] []
-        ],
-        span [] [
-            input [ placeholder "LastName", onInput UpdateLastName] []
-        ],
-        span [] [
-            input [ placeholder "Age", onInput UpdateAge ] []
+    section [ sectionStyle ]
+        [ div [ id "foo-form" ] [ lazy formView model ]
+        , div [ id "all-forms" ] [ lazy formList model.submitted ]
         ]
-    ]
 
-formList: Entries -> Html Action
+
+formView : Model -> Html Action
+formView model =
+    Html.form [ formStyle ]
+        [ span []
+            [ input [ placeholder "FirstName", onInput UpdateFirstName ] []
+            ]
+        , span []
+            [ input [ placeholder "LastName", onInput UpdateLastName ] []
+            ]
+        , span []
+            [ input [ placeholder "Age", onInput UpdateAge ] []
+            ]
+        ]
+
+
+formList : Entries -> Html Action
 formList entries =
-    ul [] [
-        (List.map (formListItem entries))
-    ]
+    ul [] (List.map formListItem entries.forms)
 
-formListItem: Entry -> Html Action
+
+formListItem : Entry -> Html Action
 formListItem entry =
-    li [] [
-        span [] [text entry.firstName],
-        span [] [text entry.lastName],
-        span [] [text (toString entry.age)]
-    ]
+    li []
+        [ span [] [ text entry.firstName ]
+        , span [] [ text entry.lastName ]
+        , span [] [ text (toString entry.age) ]
+        ]
