@@ -12,16 +12,6 @@ main =
 
 
 -- model
--- list of all entries to be displayed
-
-
-type alias Entries =
-    { forms : List Entry
-    }
-
-
-
--- currently active entry
 
 
 type alias Entry =
@@ -33,7 +23,7 @@ type alias Entry =
 
 type alias Model =
     { current : Entry
-    , submitted : Entries
+    , submitted : List Entry
     }
 
 
@@ -43,7 +33,7 @@ type alias Model =
 
 model : Model
 model =
-    { current = { age = 0, firstName = "", lastName = "" }, submitted = { forms = [] } }
+    { current = { age = 0, firstName = "", lastName = "" }, submitted = [] }
 
 
 setFirstName : String -> Entry -> Entry
@@ -64,6 +54,14 @@ setAge val entry =
 clearForm : Entry -> Entry
 clearForm entry =
     { entry | firstName = "", lastName = "", age = 0 }
+
+
+saveForm : Model -> Model
+saveForm model =
+    { model
+        | submitted = model.submitted ++ [ model.current ]
+        , current = model.current |> clearForm
+    }
 
 
 
@@ -93,9 +91,9 @@ update action model =
                 new =
                     current |> setFirstName val
             in
-            { model
-                | current = new
-            }
+                { model
+                    | current = new
+                }
 
         UpdateLastName val ->
             let
@@ -105,9 +103,9 @@ update action model =
                 new =
                     current |> setLastName val
             in
-            { model
-                | current = new
-            }
+                { model
+                    | current = new
+                }
 
         UpdateAge val ->
             let
@@ -120,9 +118,9 @@ update action model =
                 new =
                     current |> setAge age
             in
-            { model
-                | current = new
-            }
+                { model
+                    | current = new
+                }
 
         Clear ->
             let
@@ -132,12 +130,12 @@ update action model =
                 new =
                     current |> clearForm
             in
-            { model
-                | current = new
-            }
+                { model
+                    | current = new
+                }
 
         Submit ->
-            model
+            saveForm model
 
 
 
@@ -191,15 +189,20 @@ formActions model =
         ]
 
 
-formList : Entries -> Html Action
+formList : List Entry -> Html Action
 formList entries =
-    ul [] (List.map formListItem entries.forms)
+    div []
+        [ h3 [] [ text "All entries" ]
+        , ul [] (List.map formListItem entries)
+        ]
 
 
 formListItem : Entry -> Html Action
 formListItem entry =
     li []
-        [ span [] [ text entry.firstName ]
-        , span [] [ text entry.lastName ]
-        , span [] [ text (toString entry.age) ]
+        [ b [] [ text entry.firstName ]
+        , span [] [ text " " ]
+        , b [] [ text entry.lastName ]
+        , span [] [ text " " ]
+        , b [] [ text (toString entry.age) ]
         ]
