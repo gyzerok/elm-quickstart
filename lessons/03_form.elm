@@ -64,7 +64,6 @@ saveForm model =
     }
 
 
-
 -- update
 
 
@@ -153,7 +152,10 @@ sectionStyle =
 formStyle : Attribute msg
 formStyle =
     style
-        [ ( "display", "inline-grid" )
+        [
+            ( "display", "inline-flex" ),
+            ("padding", "2px"),
+            ("width", "25%")
         ]
 
 
@@ -161,37 +163,56 @@ view : Model -> Html Action
 view model =
     section [ sectionStyle ]
         [ div [ id "foo-form" ] [ lazy formView model ]
-        , div [ id "foo-form-actions" ] [ lazy formActions model ]
         , div [ id "all-forms" ] [ lazy formList model.submitted ]
         ]
 
 
 formView : Model -> Html Action
 formView model =
-    Html.form [ formStyle ]
-        [ span []
-            [ input [ type_ "text", value model.current.firstName, placeholder "FirstName", onInput UpdateFirstName ] []
-            ]
-        , span []
-            [ input [ type_ "text", value model.current.lastName, placeholder "LastName", onInput UpdateLastName ] []
-            ]
-        , span []
-            [ input [ type_ "number", value (toString model.current.age), placeholder "Age", onInput UpdateAge ] []
-            ]
+    Html.form [ formStyle, onSubmit Submit]
+        [
+            span [ style [("margin-right", "2px")] ] [
+                input [
+                    type_ "text",
+                    required True,
+                    value model.current.firstName,
+                    placeholder "FirstName",
+                    onInput UpdateFirstName
+                ] []
+            ],
+            span [ style [("margin-right", "2px")] ] [
+                input [
+                    type_ "text",
+                    required True,
+                    value model.current.lastName,
+                    placeholder "LastName",
+                    onInput UpdateLastName ] []
+            ] ,
+            span [] [
+                input [
+                    type_ "number",
+                    required True,
+                    Html.Attributes.min "1",
+                    Html.Attributes.max "100",
+                    value (toString model.current.age),
+                    placeholder "Age",
+                    onInput UpdateAge ] []
+            ],
+            div [ id "foo-form-actions", style [("margin-left", "10px")] ] [ lazy formActions model ]
         ]
 
 
 formActions : model -> Html Action
 formActions model =
-    div []
-        [ button [ onClick Submit ] [ text "Submit" ]
-        , button [ onClick Clear ] [ text "Clear" ]
+    div [] [
+            button [ type_ "submit" ] [ text "Submit" ],
+            button [ type_ "reset", onClick Clear ] [ text "Clear" ]
         ]
 
 
 formList : List Entry -> Html Action
 formList entries =
-    div []
+    div [ style[ ("float", "left"), ("max-width", "100%") ] ]
         [ h3 [] [ text "All entries" ]
         , ul [] (List.map formListItem entries)
         ]
