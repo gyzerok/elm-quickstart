@@ -3,15 +3,24 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Html.Lazy exposing (lazy)
 
 
 main =
-    Html.beginnerProgram { model = model, update = update, view = view }
+    Html.beginnerProgram { model = init, update = update, view = view }
 
 
 
 -- model
+
+
+type alias Model =
+    { submitted : List Entry
+
+    -- form
+    , firstName : String
+    , lastName : String
+    , age : Int
+    }
 
 
 type alias Entry =
@@ -21,124 +30,137 @@ type alias Entry =
     }
 
 
-type alias Model =
-    { current : Entry
-    , submitted : List Entry
+init : Model
+init =
+    { firstName = ""
+    , lastName = ""
+    , age = 0
+    , submitted = []
     }
 
-
-
--- full model
-
-
-model : Model
-model =
-    { current = { age = 0, firstName = "", lastName = "" }, submitted = [] }
-
-
-setFirstName : String -> Entry -> Entry
-setFirstName val entry =
-    { entry | firstName = val }
-
-
-setLastName : String -> Entry -> Entry
-setLastName val entry =
-    { entry | lastName = val }
-
-
-setAge : Int -> Entry -> Entry
-setAge val entry =
-    { entry | age = val }
-
-
-clearForm : Entry -> Entry
-clearForm entry =
-    { entry | firstName = "", lastName = "", age = 0 }
-
-
-saveForm : Model -> Model
-saveForm model =
-    { model
-        | submitted = model.submitted ++ [ model.current ]
-        , current = model.current |> clearForm
-    }
 
 
 -- update
 
 
 type Action
-    = NoOp
-    | UpdateFirstName String
-    | UpdateLastName String
-    | UpdateAge String
-    | Clear
-    | Submit
+    = FirstNameChanged String
+    | LastNameChanged String
+    | AgeChanged String
+    | ClearClicked
+    | FormSubmitted
 
 
 update : Action -> Model -> Model
 update action model =
     case action of
-        NoOp ->
-            model
+        FirstNameChanged val ->
+            { model | firstName = val }
 
-        UpdateFirstName val ->
-            let
-                current =
-                    model.current
+        LastNameChanged val ->
+            { model | lastName = val }
 
-                new =
-                    current |> setFirstName val
-            in
-                { model
-                    | current = new
-                }
+        AgeChanged val ->
+            { model
+                | age =
+                    val
+                        |> String.toInt
+                        |> Result.withDefault model.age
+            }
 
-        UpdateLastName val ->
-            let
-                current =
-                    model.current
+        ClearClicked ->
+            { init | submitted = model.submitted }
 
-                new =
-                    current |> setLastName val
-            in
-                { model
-                    | current = new
-                }
-
-        UpdateAge val ->
-            let
-                current =
-                    model.current
-
-                age =
-                    String.toInt val |> Result.toMaybe |> Maybe.withDefault 0
-
-                new =
-                    current |> setAge age
-            in
-                { model
-                    | current = new
-                }
-
-        Clear ->
-            let
-                current =
-                    model.current
-
-                new =
-                    current |> clearForm
-            in
-                { model
-                    | current = new
-                }
-
-        Submit ->
-            saveForm model
+        FormSubmitted ->
+            { init
+                | submitted =
+                    model.submitted
+                        ++ [ { firstName = model.firstName
+                             , lastName = model.lastName
+                             , age = model.age
+                             }
+                           ]
+            }
 
 
 
 -- view
+
+
+view : Model -> Html Action
+view model =
+    section [ sectionStyle ]
+        [ div [ id "foo-form" ] [ formView model ]
+        , div [ id "all-forms" ] [ formList model.submitted ]
+        ]
+
+
+formView : Model -> Html Action
+formView model =
+    Html.form [ formStyle, onSubmit FormSubmitted ]
+        [ span [ style [ ( "margin-right", "2px" ) ] ]
+            [ input
+                [ type_ "text"
+                , required True
+                , value model.firstName
+                , placeholder "FirstName"
+                , onInput FirstNameChanged
+                ]
+                []
+            ]
+        , span [ style [ ( "margin-right", "2px" ) ] ]
+            [ input
+                [ type_ "text"
+                , required True
+                , value model.lastName
+                , placeholder "LastName"
+                , onInput LastNameChanged
+                ]
+                []
+            ]
+        , span []
+            [ input
+                [ type_ "number"
+                , required True
+                , Html.Attributes.min "1"
+                , Html.Attributes.max "100"
+                , value (toString model.age)
+                , placeholder "Age"
+                , onInput AgeChanged
+                ]
+                []
+            ]
+        , div [ id "foo-form-actions", style [ ( "margin-left", "10px" ) ] ]
+            [ div []
+                [ button [ type_ "submit" ] [ text "Submit" ]
+                , button [ type_ "reset", onClick ClearClicked ] [ text "Clear" ]
+                ]
+            ]
+        ]
+
+
+formList : List Entry -> Html Action
+formList entries =
+    div [ style [ ( "float", "left" ), ( "max-width", "100%" ) ] ]
+        [ h3 [] [ text "All entries" ]
+        , ul []
+            (entries
+                |> List.map
+                    (\entry ->
+                        li []
+                            [ b [] [ text entry.firstName ]
+                            , span [] [ text " " ]
+                            , b [] [ text entry.lastName ]
+                            , span [] [ text " " ]
+                            , b [] [ text (toString entry.age) ]
+                            ]
+                    )
+            )
+        ]
+
+
+
+-- styles
 
 
 sectionStyle : Attribute msg
@@ -152,78 +174,7 @@ sectionStyle =
 formStyle : Attribute msg
 formStyle =
     style
-        [
-            ( "display", "inline-flex" ),
-            ("padding", "2px"),
-            ("width", "25%")
-        ]
-
-
-view : Model -> Html Action
-view model =
-    section [ sectionStyle ]
-        [ div [ id "foo-form" ] [ lazy formView model ]
-        , div [ id "all-forms" ] [ lazy formList model.submitted ]
-        ]
-
-
-formView : Model -> Html Action
-formView model =
-    Html.form [ formStyle, onSubmit Submit]
-        [
-            span [ style [("margin-right", "2px")] ] [
-                input [
-                    type_ "text",
-                    required True,
-                    value model.current.firstName,
-                    placeholder "FirstName",
-                    onInput UpdateFirstName
-                ] []
-            ],
-            span [ style [("margin-right", "2px")] ] [
-                input [
-                    type_ "text",
-                    required True,
-                    value model.current.lastName,
-                    placeholder "LastName",
-                    onInput UpdateLastName ] []
-            ] ,
-            span [] [
-                input [
-                    type_ "number",
-                    required True,
-                    Html.Attributes.min "1",
-                    Html.Attributes.max "100",
-                    value (toString model.current.age),
-                    placeholder "Age",
-                    onInput UpdateAge ] []
-            ],
-            div [ id "foo-form-actions", style [("margin-left", "10px")] ] [ lazy formActions model ]
-        ]
-
-
-formActions : model -> Html Action
-formActions model =
-    div [] [
-            button [ type_ "submit" ] [ text "Submit" ],
-            button [ type_ "reset", onClick Clear ] [ text "Clear" ]
-        ]
-
-
-formList : List Entry -> Html Action
-formList entries =
-    div [ style[ ("float", "left"), ("max-width", "100%") ] ]
-        [ h3 [] [ text "All entries" ]
-        , ul [] (List.map formListItem entries)
-        ]
-
-
-formListItem : Entry -> Html Action
-formListItem entry =
-    li []
-        [ b [] [ text entry.firstName ]
-        , span [] [ text " " ]
-        , b [] [ text entry.lastName ]
-        , span [] [ text " " ]
-        , b [] [ text (toString entry.age) ]
+        [ ( "display", "inline-flex" )
+        , ( "padding", "2px" )
+        , ( "width", "25%" )
         ]
